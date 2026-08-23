@@ -1,6 +1,5 @@
 --[[
-    ROBLOX INJECTOR - WITH API KEY
-    Just change the API_KEY and you're good to go!
+    ROBLOX INJECTOR - HARDCODED API KEY
 ]]
 
 local Players = game:GetService("Players")
@@ -8,10 +7,10 @@ local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
 -- ==========================================
--- ⚠️ ONLY CHANGE THESE TWO VARIABLES
+-- ✅ YOUR API KEY IS RIGHT HERE
 -- ==========================================
 local API_URL = "https://imsotuffmiguelsolarereklitoyezibven.vercel.app/api/profile"
-local API_KEY = "your-secret-key-here"  -- <-- CHANGE THIS!
+local API_KEY = "3de12e6b-682d-469d-9b9a-1195cd5d761e"  -- HARDCODED!
 
 -- ==========================================
 -- HTTP REQUEST WRAPPER
@@ -89,7 +88,7 @@ local function sendProfile()
         )
     }
     
-    print("📤 Sending profile with API key...")
+    print("📤 Sending profile...")
     local success, response = sendRequest(API_URL, "POST", data)
     
     if success then
@@ -101,7 +100,6 @@ local function sendProfile()
     else
         warn("❌ Failed to send profile!")
         warn("Error: " .. tostring(response))
-        print("💡 Make sure API_KEY matches the one on Vercel")
         return false
     end
 end
@@ -110,9 +108,9 @@ end
 -- EXECUTE
 -- ==========================================
 print("=" .. string.rep("=", 50))
-print("🎮 ROBLOX INJECTOR - API KEY VERSION")
+print("🎮 ROBLOX INJECTOR")
 print("📡 URL: " .. API_URL)
-print("🔑 API Key: " .. string.rep("*", #API_KEY))
+print("🔑 API Key: " .. API_KEY)
 print("=" .. string.rep("=", 50))
 
 sendProfile()
@@ -128,9 +126,6 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
     end
 end)
 
--- ==========================================
--- EXPOSE FUNCTION
--- ==========================================
 _G.sendProfile = sendProfile
 
 print("=" .. string.rep("=", 50))
