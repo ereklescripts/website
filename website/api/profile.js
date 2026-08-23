@@ -1,14 +1,11 @@
 // ============================================
-// ROBLOX DASHBOARD API - WITH API KEY
+// ROBLOX DASHBOARD API - HARDCODED API KEY
 // ============================================
 
-// Use Vercel KV or Upstash Redis for persistence
-// import { kv } from '@vercel/kv';
-// OR
-// import { Redis } from '@upstash/redis';
-// const redis = new Redis({ url: process.env.UPSTASH_REDIS_URL, token: process.env.UPSTASH_REDIS_TOKEN });
+// ✅ YOUR API KEY IS RIGHT HERE
+const VALID_API_KEY = "3de12e6b-682d-469d-9b9a-1195cd5d761e";
 
-// Simple in-memory cache (for testing, resets on each deploy)
+// Simple in-memory cache
 let profileCache = null;
 
 export default async function handler(req, res) {
@@ -26,14 +23,9 @@ export default async function handler(req, res) {
     // GET - Return profile (no API key needed)
     // ==========================================
     if (req.method === 'GET') {
-        // Try to get from cache
         if (profileCache) {
             return res.json(profileCache);
         }
-
-        // Try to get from Redis/KV
-        // const data = await kv.get('profile');
-        // if (data) return res.json(JSON.parse(data));
 
         return res.json({
             username: 'Guest',
@@ -47,11 +39,10 @@ export default async function handler(req, res) {
     // POST - Update profile (REQUIRES API KEY)
     // ==========================================
     if (req.method === 'POST') {
-        // CHECK API KEY
+        // ✅ CHECK API KEY - HARDCODED
         const apiKey = req.headers['x-api-key'];
-        const validApiKey = process.env.API_KEY || 'your-secret-key-here';
 
-        if (!apiKey || apiKey !== validApiKey) {
+        if (!apiKey || apiKey !== VALID_API_KEY) {
             return res.status(401).json({ 
                 error: 'Invalid or missing API key',
                 message: 'Please provide a valid x-api-key header'
@@ -79,10 +70,7 @@ export default async function handler(req, res) {
             // Store in memory
             profileCache = profileData;
 
-            // Store in Redis/KV if available
-            // await kv.set('profile', JSON.stringify(profileData));
-
-            console.log('✅ Profile updated with API key:', profileData.username);
+            console.log('✅ Profile updated:', profileData.username);
             
             return res.json({
                 success: true,
