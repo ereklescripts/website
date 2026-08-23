@@ -1,0 +1,11 @@
+{
+  "name": "roblox-dashboard",
+  "version": "1.0.0",
+  "description": "Roblox dashboard with API key",
+  "scripts": {
+    "vercel-build": "echo 'Building...'"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
+  }
+}
